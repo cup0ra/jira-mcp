@@ -1,0 +1,33 @@
+import { registerGetComments } from './tools/comments/get-comments.js';
+import { registerGetCurrentUser } from './tools/users/get-current-user.js';
+import { AttachmentService } from './services/attachment.service.js';
+import { registerListAttachments } from './tools/attachments/list-attachments.js';
+import { registerUploadAttachment } from './tools/attachments/upload-attachment.js';
+import { registerDownloadAttachment } from './tools/attachments/download-attachment.js';
+import { registerGetTransitions } from './tools/transitions/get-transitions.js';
+import { registerTransitionIssue } from './tools/transitions/transition-issue.js';
+import { registerCreateIssue } from './tools/issues/create-issue.js';
+import { registerUpdateIssue } from './tools/issues/update-issue.js';
+import { registerAddComment } from './tools/comments/add-comment.js';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { Config } from './config/config.js';
+import { JiraClient } from './jira/jira-client.js';
+import { registerSearchIssues } from './tools/issues/search-issues.js';
+import { registerGetIssue } from './tools/issues/get-issue.js';
+export function createServer(config: Config, client = new JiraClient(config)) {
+  const server = new McpServer({ name: 'jira-mcp', version: '0.1.0' });
+  registerSearchIssues(server, client, config);
+  registerGetIssue(server, client, config);
+  registerCreateIssue(server, client, config);
+  registerUpdateIssue(server, client, config);
+  registerAddComment(server, client, config);
+  registerGetTransitions(server, client, config);
+  registerTransitionIssue(server, client, config);
+  const attachments = new AttachmentService(client, config);
+  registerListAttachments(server, attachments, config);
+  registerUploadAttachment(server, attachments, config);
+  registerDownloadAttachment(server, attachments, config);
+  registerGetCurrentUser(server, client, config);
+  registerGetComments(server, client, config);
+  return server;
+}

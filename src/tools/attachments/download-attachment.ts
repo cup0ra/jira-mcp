@@ -12,7 +12,7 @@ export function registerDownloadAttachment(
     'jira_download_attachment',
     {
       description:
-        'LOCAL WRITE: download a Jira attachment. Omit destinationPath to create a private temporary directory automatically; returns savedTo, mimeType, size and cleanupPath. Read savedTo with your local file/image tool; remove cleanupPath when finished. Each automatic download creates a new directory. Explicit destinations must be inside JIRA_MCP_ALLOWED_PATHS with an existing parent; overwrite must be true to replace a file. Rejects destination symlinks. Does not modify Jira.',
+        'LOCAL WRITE: download a Jira attachment. Omit destinationPath to create a private temporary directory automatically; returns savedTo, mimeType, size, cleanupPath and downloadId. Read savedTo with your local file/image tool; then call jira_cleanup_attachments with downloadIds instead of deleting through Bash. IDs are valid only in this server process. Each automatic download creates a new directory. Explicit destinations must be inside JIRA_MCP_ALLOWED_PATHS with an existing parent; overwrite must be true to replace a file. Rejects destination symlinks. Does not modify Jira.',
       inputSchema: {
         attachmentId: z.string().regex(/^[0-9]+$/),
         destinationPath: z.string().min(1).optional(),

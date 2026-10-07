@@ -98,6 +98,7 @@ it('exposes validated read-only tools and sanitized MCP errors', async () => {
       'jira_download_attachment',
       'jira_get_current_user',
       'jira_get_comments',
+      'jira_cleanup_attachments',
     ]);
     expect(
       tools.tools

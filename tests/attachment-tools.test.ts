@@ -113,6 +113,24 @@ it('downloads through MCP with only attachmentId', async () => {
     expect(output.savedTo).toContain('/42.txt');
     const { readFile } = await import('node:fs/promises');
     expect(await readFile(output.savedTo, 'utf8')).toBe('log');
+    expect(output.downloadId).toBeTruthy();
+    const cleanup = await client.callTool({
+      name: 'jira_cleanup_attachments',
+      arguments: { downloadIds: [output.downloadId] },
+    });
+    expect(
+      JSON.parse((cleanup.content as { text: string }[])[0]!.text).results[0]
+        .status,
+    ).toBe('deleted');
+    await expect(readFile(output.savedTo)).rejects.toThrow();
+    expect(
+      (
+        await client.callTool({
+          name: 'jira_cleanup_attachments',
+          arguments: { downloadIds: [output.cleanupPath] },
+        })
+      ).isError,
+    ).toBe(true);
   } finally {
     await client.close();
     await server.close();

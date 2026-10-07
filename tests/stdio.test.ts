@@ -12,7 +12,7 @@ it('starts the built entrypoint and lists tools over stdio', async () => {
   });
   try {
     await client.connect(transport);
-    expect((await client.listTools()).tools).toHaveLength(12);
+    expect((await client.listTools()).tools).toHaveLength(13);
   } finally {
     await client.close();
   }

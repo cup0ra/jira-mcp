@@ -353,3 +353,81 @@ it('uses a safe fallback extension and rejects path-like attachment IDs', async 
     await rm(result.cleanupPath!, { recursive: true, force: true });
   }
 });
+it('cleans only registered downloads and permits repeated cleanup', async () => {
+  const fetcher = vi.fn().mockImplementation((url: string) =>
+    Promise.resolve(
+      url.includes('/rest/api/2/attachment/')
+        ? json({
+            filename: 'a.txt',
+            size: 5,
+            content: 'https://jira.example.com/jira/file',
+          })
+        : new Response('hello'),
+    ),
+  );
+  const service = new AttachmentService(
+    new JiraClient(config, { fetch: fetcher }),
+    { allowedPaths: [allowed], maxFileSizeBytes: 20 },
+  );
+  const result = await service.download('1');
+  try {
+    expect(result.downloadId).toBeTruthy();
+    expect(await service.cleanup([result.downloadId!])).toEqual({
+      results: [{ downloadId: result.downloadId, status: 'deleted' }],
+    });
+    await expect(readFile(result.savedTo)).rejects.toThrow();
+    expect(
+      (await service.cleanup([result.downloadId!])).results[0]!.status,
+    ).toBe('not_found');
+    expect((await service.cleanup([allowed])).results[0]!.status).toBe(
+      'not_found',
+    );
+    expect(await readFile(join(allowed, 'a.txt'), 'utf8')).toBe('hello');
+  } finally {
+    await rm(result.cleanupPath!, { recursive: true, force: true });
+  }
+});
+it('refuses replaced directories and preserves unexpected files on cleanup', async () => {
+  const fetcher = vi.fn().mockImplementation((url: string) =>
+    Promise.resolve(
+      url.includes('/rest/api/2/attachment/')
+        ? json({
+            filename: 'a.txt',
+            size: 5,
+            content: 'https://jira.example.com/jira/file',
+          })
+        : new Response('hello'),
+    ),
+  );
+  const service = new AttachmentService(
+    new JiraClient(config, { fetch: fetcher }),
+    { allowedPaths: [], maxFileSizeBytes: 20 },
+  );
+  const result = await service.download('1');
+  const { rename } = await import('node:fs/promises');
+  const moved = `${result.cleanupPath}-moved`;
+  try {
+    await rename(result.cleanupPath!, moved);
+    await symlink(outside, result.cleanupPath!);
+    expect(
+      (await service.cleanup([result.downloadId!])).results[0]!.status,
+    ).toBe('failed');
+    expect(await readFile(join(outside, 'secret'), 'utf8')).toBe('private');
+    await rm(result.cleanupPath!);
+    await rename(moved, result.cleanupPath!);
+    await writeFile(join(result.cleanupPath!, 'keep'), 'mine');
+    expect(
+      (await service.cleanup([result.downloadId!])).results[0]!.status,
+    ).toBe('failed');
+    expect(await readFile(join(result.cleanupPath!, 'keep'), 'utf8')).toBe(
+      'mine',
+    );
+    await rm(join(result.cleanupPath!, 'keep'));
+    expect(
+      (await service.cleanup([result.downloadId!])).results[0]!.status,
+    ).toBe('deleted');
+  } finally {
+    await rm(result.cleanupPath!, { recursive: true, force: true });
+    await rm(moved, { recursive: true, force: true });
+  }
+});

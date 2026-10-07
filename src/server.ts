@@ -1,3 +1,4 @@
+import { registerCleanupAttachments } from './tools/attachments/cleanup-attachments.js';
 import { registerGetComments } from './tools/comments/get-comments.js';
 import { registerGetCurrentUser } from './tools/users/get-current-user.js';
 import { AttachmentService } from './services/attachment.service.js';
@@ -15,7 +16,7 @@ import { JiraClient } from './jira/jira-client.js';
 import { registerSearchIssues } from './tools/issues/search-issues.js';
 import { registerGetIssue } from './tools/issues/get-issue.js';
 export function createServer(config: Config, client = new JiraClient(config)) {
-  const server = new McpServer({ name: 'jira-mcp', version: '0.1.0' });
+  const server = new McpServer({ name: 'jira-mcp', version: '0.1.1' });
   registerSearchIssues(server, client, config);
   registerGetIssue(server, client, config);
   registerCreateIssue(server, client, config);
@@ -29,5 +30,6 @@ export function createServer(config: Config, client = new JiraClient(config)) {
   registerDownloadAttachment(server, attachments, config);
   registerGetCurrentUser(server, client, config);
   registerGetComments(server, client, config);
+  registerCleanupAttachments(server, attachments, config);
   return server;
 }

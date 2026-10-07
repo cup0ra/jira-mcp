@@ -1,6 +1,6 @@
 {
   "name": "@cup0ra/jira-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Compact Jira Server/Data Center MCP server with PAT authentication",
   "type": "module",
   "bin": {

@@ -1,4 +1,5 @@
-import { mkdtemp, realpath, rm } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
+import { mkdtemp, realpath, rm, lstat, unlink, rmdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Config } from '../config/config.js';
@@ -21,6 +22,10 @@ export function attachmentMetadata(a: JiraAttachment) {
 }
 export class AttachmentService {
   private readonly files: FileAccess;
+  private readonly downloads = new Map<
+    string,
+    { directory: string; file: string; dev: number; ino: number }
+  >();
   constructor(
     private readonly client: JiraClient,
     config: Pick<Config, 'allowedPaths' | 'maxFileSizeBytes'>,
@@ -68,6 +73,7 @@ export class AttachmentService {
     );
     let savedTo: string;
     let cleanupPath: string | undefined;
+    let downloadId: string | undefined;
     if (destinationPath !== undefined) {
       savedTo = await this.files.write(destinationPath, data, overwrite);
     } else {
@@ -86,6 +92,14 @@ export class AttachmentService {
           this.files.maxBytes,
         );
         savedTo = await temporaryFiles.write(target, data, false);
+        const directory = await lstat(cleanupPath);
+        downloadId = randomUUID();
+        this.downloads.set(downloadId, {
+          directory: cleanupPath,
+          file: savedTo,
+          dev: directory.dev,
+          ino: directory.ino,
+        });
       } catch (error) {
         if (created) await rm(created, { recursive: true, force: true });
         if (error instanceof FileAccessDeniedError) throw error;
@@ -100,7 +114,58 @@ export class AttachmentService {
       savedTo,
       size: data.byteLength,
       mimeType: attachment.mimeType ?? 'application/octet-stream',
-      ...(cleanupPath ? { cleanupPath } : {}),
+      ...(cleanupPath ? { cleanupPath, downloadId } : {}),
     };
+  }
+  async cleanup(downloadIds: string[]) {
+    if (!downloadIds.length || downloadIds.length > 100)
+      throw new JiraValidationError('Provide 1–100 downloadIds.');
+    const results = [];
+    for (const downloadId of new Set(downloadIds)) {
+      const entry = this.downloads.get(downloadId);
+      if (!entry) {
+        results.push({ downloadId, status: 'not_found' });
+        continue;
+      }
+      try {
+        const directory = await lstat(entry.directory).catch(
+          (error: NodeJS.ErrnoException) => {
+            if (error.code === 'ENOENT') return null;
+            throw error;
+          },
+        );
+        if (directory) {
+          if (
+            !directory.isDirectory() ||
+            directory.isSymbolicLink() ||
+            directory.dev !== entry.dev ||
+            directory.ino !== entry.ino ||
+            (await realpath(entry.directory)) !== entry.directory
+          ) {
+            results.push({
+              downloadId,
+              status: 'failed',
+              error: 'Temporary directory was replaced; cleanup refused.',
+            });
+            continue;
+          }
+          // Remove only the downloaded entry, never recursively delete unexpected contents.
+          await unlink(entry.file).catch((error: NodeJS.ErrnoException) => {
+            if (error.code !== 'ENOENT') throw error;
+          });
+          await rmdir(entry.directory);
+        }
+        this.downloads.delete(downloadId);
+        results.push({ downloadId, status: 'deleted' });
+      } catch {
+        results.push({
+          downloadId,
+          status: 'failed',
+          error:
+            'Cleanup failed. Check directory permissions or unexpected files; the download ID is retained for retry.',
+        });
+      }
+    }
+    return { results };
   }
 }

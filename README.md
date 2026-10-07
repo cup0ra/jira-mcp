@@ -14,7 +14,7 @@ node dist/index.js
 
 Set the environment before starting. The server does not automatically load `.env` files. stdout carries only MCP messages; diagnostics use stderr. A server waiting silently for a client on stdin is normal.
 
-The npm package name is `@cup0ra/jira-mcp`. Once the release is published, run `npx -y @cup0ra/jira-mcp`. For local development, configure clients to run the built entrypoint.
+Run the public npm package with `npx -y @cup0ra/jira-mcp`. For local development, configure clients to run the built entrypoint.
 
 ## PAT setup and configuration
 
@@ -68,7 +68,7 @@ JIRA_BASE_URL = "https://jira.example.com"
 JIRA_MCP_ALLOWED_PATHS = "/Users/me/projects,/tmp"
 ```
 
-Once a package has actually been published, replace `command` with `"npx"` and `args` with `["-y", "@cup0ra/jira-mcp"]`. Use `env_vars` for token forwarding instead of assuming `${JIRA_PAT}` is expanded inside TOML. See [Codex MCP configuration](https://developers.openai.com/codex/mcp).
+To use the npm package, replace `command` with `"npx"` and `args` with `["-y", "@cup0ra/jira-mcp"]`. Use `env_vars` for token forwarding instead of assuming `${JIRA_PAT}` is expanded inside TOML. See [Codex MCP configuration](https://developers.openai.com/codex/mcp).
 
 ## Claude Code setup
 
@@ -119,7 +119,7 @@ npm run format:check
 npm pack --dry-run
 ```
 
-Tests use mocked HTTP and MCP transports; no Jira credentials or instance are needed. They cover configuration, auth, context-path URL construction, status errors, redaction, retries, normalization, tool validation, and stdio startup. Build output is `dist/`, and the npm executable points to `dist/index.js`. The package includes compiled files and this README; tests, source, and local secrets are excluded. Review package name, licensing, and metadata before any manual publication.
+Tests use mocked HTTP and MCP transports; no Jira credentials or instance are needed. They cover configuration, auth, context-path URL construction, status errors, redaction, retries, normalization, tool validation, and stdio startup. Build output is `dist/`, and the npm executable points to `dist/index.js`. The package includes compiled files and this README; tests, source, and local secrets are excluded. The package is MIT licensed; see [LICENSE](LICENSE).
 
 Architecture: `src/config` validates environment; `src/jira` handles HTTP/types/normalization; `src/tools` validates tool inputs and translates errors; `src/server.ts` registers tools; `src/index.ts` starts stdio. `src/services/attachment.service.ts` coordinates file operations, while `src/security/file-access.ts` enforces local file policy.
 

@@ -1,5 +1,5 @@
 {
-  "name": "@scope/jira-mcp",
+  "name": "@cup0ra/jira-mcp",
   "version": "0.1.0",
   "description": "Compact Jira Server/Data Center MCP server with PAT authentication",
   "type": "module",
@@ -35,5 +35,26 @@
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.71.1",
     "vitest": "^4.1.11"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cup0ra/jira-mcp.git"
+  },
+  "homepage": "https://github.com/cup0ra/jira-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/cup0ra/jira-mcp/issues"
+  },
+  "keywords": [
+    "mcp",
+    "jira",
+    "jira-server",
+    "jira-data-center",
+    "attachments",
+    "claude",
+    "codex"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }

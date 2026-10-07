@@ -14,7 +14,7 @@ node dist/index.js
 
 Set the environment before starting. The server does not automatically load `.env` files. stdout carries only MCP messages; diagnostics use stderr. A server waiting silently for a client on stdin is normal.
 
-`@scope/jira-mcp` is a placeholder package name. Nothing has been published. After choosing an owned scope and publishing a release manually, the intended usage is `npx -y @scope/jira-mcp`. Until then, configure clients to run the local built entrypoint.
+The npm package name is `@cup0ra/jira-mcp`. Once the release is published, run `npx -y @cup0ra/jira-mcp`. For local development, configure clients to run the built entrypoint.
 
 ## PAT setup and configuration
 
@@ -68,7 +68,7 @@ JIRA_BASE_URL = "https://jira.example.com"
 JIRA_MCP_ALLOWED_PATHS = "/Users/me/projects,/tmp"
 ```
 
-Once a package has actually been published, replace `command` with `"npx"` and `args` with `["-y", "@scope/jira-mcp"]`. Use `env_vars` for token forwarding instead of assuming `${JIRA_PAT}` is expanded inside TOML. See [Codex MCP configuration](https://developers.openai.com/codex/mcp).
+Once a package has actually been published, replace `command` with `"npx"` and `args` with `["-y", "@cup0ra/jira-mcp"]`. Use `env_vars` for token forwarding instead of assuming `${JIRA_PAT}` is expanded inside TOML. See [Codex MCP configuration](https://developers.openai.com/codex/mcp).
 
 ## Claude Code setup
 
